@@ -37,7 +37,7 @@ export default function LoginPage() {
   return (
     <main className="flex flex-1 items-center justify-center p-8">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
-        <h1 className="text-2xl font-semibold">Log in</h1>
+        <h1 className="title text-2xl">Log in</h1>
 
         <div className="space-y-1">
           <label htmlFor="email" className="text-sm font-medium">
@@ -49,7 +49,7 @@ export default function LoginPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded border px-3 py-2"
+            className="field"
           />
         </div>
 
@@ -63,23 +63,23 @@ export default function LoginPage() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border px-3 py-2"
+            className="field"
           />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+          className="btn btn-primary w-full"
         >
           {submitting ? "Logging in..." : "Log in"}
         </button>
 
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="underline">
+          <Link href="/register" className="link">
             Register
           </Link>
         </p>

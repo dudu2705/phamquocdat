@@ -6,11 +6,22 @@ export default async function Home() {
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
-      <h1 className="text-4xl font-semibold">Hello Dat</h1>
+      <h1 className="title text-center text-5xl break-words">
+        {session?.user ? (session.user.name ?? session.user.email) : "Log in to see my stuff"}
+      </h1>
+      <div className="ornament w-64">&#9670;</div>
 
       {session?.user ? (
         <div className="flex flex-col items-center gap-3">
-          <p className="text-gray-600">
+          <div className="flex gap-6">
+            <Link href="/articles" className="link">
+              Esoteric knowledge
+            </Link>
+            <Link href="/products" className="link">
+              Browse products
+            </Link>
+          </div>
+          <p className="text-muted">
             Signed in as {session.user.email}
           </p>
           <form
@@ -19,17 +30,17 @@ export default async function Home() {
               await signOut({ redirectTo: "/" });
             }}
           >
-            <button type="submit" className="rounded border px-3 py-2">
+            <button type="submit" className="btn">
               Log out
             </button>
           </form>
         </div>
       ) : (
         <div className="flex gap-3">
-          <Link href="/login" className="rounded border px-3 py-2">
+          <Link href="/login" className="btn">
             Log in
           </Link>
-          <Link href="/register" className="rounded bg-black px-3 py-2 text-white">
+          <Link href="/register" className="btn btn-primary">
             Register
           </Link>
         </div>
