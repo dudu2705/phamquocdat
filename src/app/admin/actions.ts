@@ -9,10 +9,11 @@ import { parsePrice } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import {
   MAX_DESCRIPTION_LENGTH,
+  MAX_DOWNLOAD_FILES,
   MAX_NAME_LENGTH,
   type ProductFormState,
 } from "@/lib/products";
-import { deleteImages, uploadImageFiles } from "@/lib/s3";
+import { deleteDownloadFiles, deleteImages, uploadDownloadFile, uploadImageFiles } from "@/lib/s3";
 
 export async function login(_state: string | null, formData: FormData) {
   try {
@@ -74,7 +75,18 @@ function parseProductForm(formData: FormData) {
     return imageError;
   }
 
-  return { name, description, price, files };
+  const downloadFiles: File[] = [];
+  for (const entry of formData.getAll("downloads")) {
+    if (entry instanceof File && entry.size > 0) {
+      downloadFiles.push(entry);
+    }
+  }
+
+  if (downloadFiles.length > MAX_DOWNLOAD_FILES) {
+    return `Upload at most ${MAX_DOWNLOAD_FILES} downloadable files.`;
+  }
+
+  return { name, description, price, files, downloadFiles };
 }
 
 export async function createProduct(_state: ProductFormState, formData: FormData) {
@@ -85,13 +97,29 @@ export async function createProduct(_state: ProductFormState, formData: FormData
     return formError(parsed, formData);
   }
 
-  const { name, description, price, files } = parsed;
+  const { name, description, price, files, downloadFiles } = parsed;
   if (files.length === 0 || files.length > MAX_IMAGES) {
     return formError(`Upload between 1 and ${MAX_IMAGES} images.`, formData);
   }
 
   const images = await uploadImageFiles(files, "products");
-  await prisma.product.create({ data: { name, description, price, images } });
+  const downloadKeys = await Promise.all(downloadFiles.map(uploadDownloadFile));
+
+  await prisma.product.create({
+    data: {
+      name,
+      description,
+      price,
+      images,
+      files: {
+        create: downloadFiles.map((file, index) => ({
+          key: downloadKeys[index],
+          filename: file.name,
+          size: file.size,
+        })),
+      },
+    },
+  });
 
   redirect("/admin");
 }
@@ -103,7 +131,10 @@ export async function updateProduct(
 ) {
   await requireAdmin();
 
-  const product = await prisma.product.findUnique({ where: { id } });
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: { files: true },
+  });
   if (!product) {
     notFound();
   }
@@ -113,14 +144,14 @@ export async function updateProduct(
     return formError(parsed, formData);
   }
 
-  const { name, description, price, files } = parsed;
+  const { name, description, price, files, downloadFiles } = parsed;
 
   const toRemove = new Set(formData.getAll("removeImages").map(String));
   const kept: string[] = [];
-  const removed: string[] = [];
+  const removedImages: string[] = [];
   for (const key of product.images) {
     if (toRemove.has(key)) {
-      removed.push(key);
+      removedImages.push(key);
     } else {
       kept.push(key);
     }
@@ -131,12 +162,41 @@ export async function updateProduct(
     return formError(`A product needs between 1 and ${MAX_IMAGES} images.`, formData);
   }
 
+  const removeDownloadIds = new Set(formData.getAll("removeDownloads").map(String));
+  const keptDownloads = product.files.filter((file) => !removeDownloadIds.has(file.id));
+  const removedDownloads = product.files.filter((file) => removeDownloadIds.has(file.id));
+
+  if (keptDownloads.length + downloadFiles.length > MAX_DOWNLOAD_FILES) {
+    return formError(`Upload at most ${MAX_DOWNLOAD_FILES} downloadable files.`, formData);
+  }
+
   const added = await uploadImageFiles(files, "products");
-  await prisma.product.update({
-    where: { id },
-    data: { name, description, price, images: [...kept, ...added] },
-  });
-  await deleteImages(removed);
+  const addedDownloadKeys = await Promise.all(downloadFiles.map(uploadDownloadFile));
+
+  await prisma.$transaction([
+    prisma.productFile.deleteMany({
+      where: { id: { in: removedDownloads.map((file) => file.id) } },
+    }),
+    prisma.product.update({
+      where: { id },
+      data: {
+        name,
+        description,
+        price,
+        images: [...kept, ...added],
+        files: {
+          create: downloadFiles.map((file, index) => ({
+            key: addedDownloadKeys[index],
+            filename: file.name,
+            size: file.size,
+          })),
+        },
+      },
+    }),
+  ]);
+
+  await deleteImages(removedImages);
+  await deleteDownloadFiles(removedDownloads.map((file) => file.key));
 
   redirect("/admin");
 }
@@ -144,10 +204,14 @@ export async function updateProduct(
 export async function deleteProduct(id: string) {
   await requireAdmin();
 
-  const product = await prisma.product.findUnique({ where: { id } });
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: { files: true },
+  });
   if (product) {
     await prisma.product.delete({ where: { id } });
     await deleteImages(product.images);
+    await deleteDownloadFiles(product.files.map((file) => file.key));
   }
 
   redirect("/admin");

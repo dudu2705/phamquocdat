@@ -15,6 +15,10 @@ export default async function ProductsPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl space-y-6 p-8">
+      <Link href="/" className="link inline-block text-sm text-muted">
+        Home
+      </Link>
+
       <h1 className="title text-3xl">Products</h1>
       <div className="ornament">&#9670;</div>
 

@@ -13,7 +13,10 @@ export default async function EditProductPage({
   await requireAdmin();
   const { id } = await params;
 
-  const product = await prisma.product.findUnique({ where: { id } });
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: { files: true },
+  });
   if (!product) {
     notFound();
   }
@@ -27,6 +30,11 @@ export default async function EditProductPage({
           description: product.description,
           price: priceInputValue(product.price),
           images: product.images.map((key) => ({ key, url: imageUrl(key) })),
+          downloadFiles: product.files.map((file) => ({
+            id: file.id,
+            filename: file.filename,
+            size: file.size,
+          })),
         }}
       />
       <div className="ornament">&#9670;</div>

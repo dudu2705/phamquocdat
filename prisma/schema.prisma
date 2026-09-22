@@ -19,6 +19,7 @@ model User {
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  orders       Order[]
 }
 
 model Admin {
@@ -30,13 +31,55 @@ model Admin {
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String
   description String
   price       Int
   images      String[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  files       ProductFile[]
+  orders      Order[]
+}
+
+model ProductFile {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  key       String
+  filename  String
+  size      Int
+  createdAt DateTime @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  EXPIRED
+  FAILED
+}
+
+// amountWei and ethUsdRateSnapshot are locked at creation so a later price
+// edit or market move never changes what an in-flight order owes.
+model Order {
+  id                 String      @id @default(cuid())
+  productId          String
+  product            Product     @relation(fields: [productId], references: [id])
+  userId             String
+  user               User        @relation(fields: [userId], references: [id])
+  status             OrderStatus @default(PENDING)
+  usdPriceSnapshot   Int
+  ethUsdRateSnapshot Float
+  amountWei          String
+  expiresAt          DateTime
+  txHash             String?     @unique
+  note               String?
+  paidAt             DateTime?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([productId])
 }
 
 model Article {

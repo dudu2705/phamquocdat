@@ -23,6 +23,9 @@ export default async function AdminPanelLayout({
             <Link href="/admin/articles" className="transition hover:text-gold">
               Articles
             </Link>
+            <Link href="/admin/orders" className="transition hover:text-gold">
+              Orders
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-4 text-sm">

@@ -5,7 +5,12 @@ import Image from "next/image";
 import { createProduct, updateProduct } from "../../actions";
 import { IMAGE_EXTENSIONS, MAX_IMAGE_BYTES, MAX_IMAGES } from "@/lib/images";
 import { CURRENCY } from "@/lib/money";
-import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH } from "@/lib/products";
+import {
+  formatFileSize,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_DOWNLOAD_FILES,
+  MAX_NAME_LENGTH,
+} from "@/lib/products";
 
 type ProductFormProps = {
   product?: {
@@ -14,6 +19,7 @@ type ProductFormProps = {
     description: string;
     price: string;
     images: { key: string; url: string }[];
+    downloadFiles: { id: string; filename: string; size: number }[];
   };
 };
 
@@ -101,6 +107,42 @@ export function ProductForm({ product }: ProductFormProps) {
         <p className="text-xs text-muted">
           Up to {MAX_IMAGES} images{product ? " in total" : ""}, {MAX_IMAGE_BYTES / 1024 / 1024}MB
           each.
+        </p>
+      </div>
+
+      {product && product.downloadFiles.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Current downloadable files</p>
+          <ul className="space-y-1">
+            {product.downloadFiles.map((file) => (
+              <li key={file.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="truncate">
+                  {file.filename}{" "}
+                  <span className="text-muted">({formatFileSize(file.size)})</span>
+                </span>
+                <label className="flex shrink-0 items-center gap-1 text-xs text-muted">
+                  <input
+                    type="checkbox"
+                    name="removeDownloads"
+                    value={file.id}
+                    className="accent-blood-bright"
+                  />
+                  Remove
+                </label>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="space-y-1">
+        <label htmlFor="downloads" className="text-sm font-medium">
+          Add downloadable files
+        </label>
+        <input id="downloads" name="downloads" type="file" multiple className="field" />
+        <p className="text-xs text-muted">
+          What a paying customer receives after checkout. Up to {MAX_DOWNLOAD_FILES} files total.
+          Optional — without one, the product won&apos;t show a Buy button.
         </p>
       </div>
 

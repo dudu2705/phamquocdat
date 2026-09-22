@@ -16,9 +16,14 @@ export default async function ArticlePage({ params }: PageProps<"/articles/[id]"
 
   return (
     <main className="mx-auto w-full max-w-3xl space-y-6 p-8">
-      <Link href="/articles" className="link inline-block text-sm text-muted">
-        All knowledge
-      </Link>
+      <div className="flex gap-4 text-sm">
+        <Link href="/" className="link text-muted">
+          Home
+        </Link>
+        <Link href="/articles" className="link text-muted">
+          All knowledge
+        </Link>
+      </div>
 
       <h1 className="title text-4xl">{article.title}</h1>
 
