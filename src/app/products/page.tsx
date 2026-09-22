@@ -1,13 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
-import { formatPrice } from "@/lib/money";
+import { getEthUsdPrice } from "@/lib/eth-price";
+import { formatEth, formatPrice, usdToEth } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { imageUrl } from "@/lib/s3";
 
 export default async function ProductsPage() {
   await connection();
-  const products = await prisma.product.findMany({ orderBy: { createdAt: "desc" } });
+  const [products, ethUsdPrice] = await Promise.all([
+    prisma.product.findMany({ orderBy: { createdAt: "desc" } }),
+    getEthUsdPrice(),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-5xl space-y-6 p-8">
@@ -34,6 +38,11 @@ export default async function ProductsPage() {
                 />
                 <p className="truncate text-bone">{product.name}</p>
                 <p className="text-gold">{formatPrice(product.price)}</p>
+                {ethUsdPrice && (
+                  <p className="text-sm text-muted">
+                    &#8776; {formatEth(usdToEth(product.price, ethUsdPrice))}
+                  </p>
+                )}
               </Link>
             </li>
           ))}

@@ -25,3 +25,12 @@ export function parsePrice(input: string) {
   const minorUnits = Math.round(value * 10 ** fractionDigits);
   return minorUnits <= MAX_MINOR_UNITS ? minorUnits : null;
 }
+
+// usdPerEth comes from the Chainlink feed. Result is ETH, not wei.
+export function usdToEth(minorUnits: number, usdPerEth: number) {
+  return minorUnits / 10 ** fractionDigits / usdPerEth;
+}
+
+export function formatEth(eth: number) {
+  return `${eth.toFixed(6).replace(/0+$/, "").replace(/\.$/, "")} ETH`;
+}
