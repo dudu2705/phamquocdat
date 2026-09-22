@@ -6,8 +6,11 @@ export default async function Home() {
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static SVG, next/image can't optimize SVGs without extra config */}
+      <img src="/logo.svg" alt="Site logo" className="h-64 w-auto" />
+
       <h1 className="title text-center text-5xl break-words">
-        {session?.user ? (session.user.name ?? session.user.email) : "Log in to see my stuff"}
+        {session?.user ? `Hello, ${session.user.name ?? session.user.email}` : "Log in to see my stuff"}
       </h1>
       <div className="ornament w-64">&#9670;</div>
 
