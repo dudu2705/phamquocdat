@@ -1,7 +1,11 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+
+export class PendingApprovalError extends CredentialsSignin {
+  code = "pending-approval";
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
@@ -37,6 +41,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const passwordValid = await bcrypt.compare(password, user.passwordHash);
         if (!passwordValid) {
           return null;
+        }
+
+        if (!user.approved) {
+          throw new PendingApprovalError();
         }
 
         return { id: user.id, name: user.name, email: user.email };

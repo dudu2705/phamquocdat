@@ -26,7 +26,11 @@ export default function LoginPage() {
     setSubmitting(false);
 
     if (result?.error) {
-      setError("Invalid email or password.");
+      setError(
+        result.code === "pending-approval"
+          ? "Your account is pending admin approval."
+          : "Invalid email or password.",
+      );
       return;
     }
 

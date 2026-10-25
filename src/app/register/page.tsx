@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,7 +30,23 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push("/login");
+    setSubmitted(true);
+  }
+
+  if (submitted) {
+    return (
+      <main className="flex flex-1 items-center justify-center p-8">
+        <div className="w-full max-w-sm space-y-4 text-center">
+          <h1 className="title text-2xl">Account created</h1>
+          <p className="text-sm text-muted">
+            An admin needs to approve your account before you can log in. Check back soon.
+          </p>
+          <Link href="/login" className="link">
+            Back to log in
+          </Link>
+        </div>
+      </main>
+    );
   }
 
   return (
