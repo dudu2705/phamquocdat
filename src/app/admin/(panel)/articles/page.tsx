@@ -12,9 +12,14 @@ export default async function AdminArticlesPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="title text-2xl">Articles</h1>
-        <Link href="/admin/articles/new" className="btn btn-primary">
-          Add article
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/admin/articles/writer" className="btn">
+            Write with Claude
+          </Link>
+          <Link href="/admin/articles/new" className="btn btn-primary">
+            Add article
+          </Link>
+        </div>
       </div>
 
       {articles.length === 0 ? (

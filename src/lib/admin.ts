@@ -4,19 +4,20 @@ import { adminAuth } from "@/admin-auth";
 import { prisma } from "@/lib/prisma";
 
 // Checks the database on every call, so removing an admin row revokes access immediately.
-export const requireAdmin = cache(async () => {
+export const getAdmin = cache(async () => {
   const session = await adminAuth();
   const id = session?.user?.id;
-
-  if (id) {
-    const admin = await prisma.admin.findUnique({
-      where: { id },
-      select: { id: true, email: true },
-    });
-    if (admin) {
-      return admin;
-    }
+  if (!id) {
+    return null;
   }
 
-  redirect("/admin/login");
+  return prisma.admin.findUnique({ where: { id }, select: { id: true, email: true } });
+});
+
+export const requireAdmin = cache(async () => {
+  const admin = await getAdmin();
+  if (!admin) {
+    redirect("/admin/login");
+  }
+  return admin;
 });

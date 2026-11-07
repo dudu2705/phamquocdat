@@ -18,9 +18,12 @@ type ArticleFormProps = {
     content: string;
     imageUrl: string;
   };
+  // A draft lifted out of the writer. It only seeds the fields; everything
+  // after that is typed over it, and a failed save still wins.
+  draft?: { title: string; content: string };
 };
 
-export function ArticleForm({ article }: ArticleFormProps) {
+export function ArticleForm({ article, draft }: ArticleFormProps) {
   const [state, formAction, pending] = useActionState(
     article ? updateArticle.bind(null, article.id) : createArticle,
     null,
@@ -40,7 +43,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
           type="text"
           required
           maxLength={MAX_TITLE_LENGTH}
-          defaultValue={state?.values.title ?? article?.title}
+          defaultValue={state?.values.title ?? draft?.title ?? article?.title}
           className="field"
         />
       </div>
@@ -99,7 +102,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
           rows={14}
           required
           maxLength={MAX_CONTENT_LENGTH}
-          defaultValue={state?.values.content ?? article?.content}
+          defaultValue={state?.values.content ?? draft?.content ?? article?.content}
           className="field"
         />
       </div>
