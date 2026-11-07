@@ -102,8 +102,17 @@ export async function createProduct(_state: ProductFormState, formData: FormData
     return formError(`Upload between 1 and ${MAX_IMAGES} images.`, formData);
   }
 
-  const images = await uploadImageFiles(files, "products");
-  const downloadKeys = await Promise.all(downloadFiles.map(uploadDownloadFile));
+  let images: string[];
+  let downloadKeys: string[];
+  try {
+    // Nothing is written to the database until both uploads land, so a failure
+    // here leaves no product pointing at a key that does not exist.
+    images = await uploadImageFiles(files, "products");
+    downloadKeys = await Promise.all(downloadFiles.map(uploadDownloadFile));
+  } catch (error) {
+    console.error("Failed to upload product files", error);
+    return formError("Could not store the uploaded files. The product was not saved.", formData);
+  }
 
   await prisma.product.create({
     data: {
@@ -170,8 +179,15 @@ export async function updateProduct(
     return formError(`Upload at most ${MAX_DOWNLOAD_FILES} downloadable files.`, formData);
   }
 
-  const added = await uploadImageFiles(files, "products");
-  const addedDownloadKeys = await Promise.all(downloadFiles.map(uploadDownloadFile));
+  let added: string[];
+  let addedDownloadKeys: string[];
+  try {
+    added = await uploadImageFiles(files, "products");
+    addedDownloadKeys = await Promise.all(downloadFiles.map(uploadDownloadFile));
+  } catch (error) {
+    console.error("Failed to upload product files", error);
+    return formError("Could not store the uploaded files. The changes were not saved.", formData);
+  }
 
   await prisma.$transaction([
     prisma.productFile.deleteMany({

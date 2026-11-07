@@ -64,7 +64,16 @@ export async function createArticle(_state: ArticleFormState, formData: FormData
     return formError("Upload a hero image.", formData);
   }
 
-  const [imageKey] = await uploadImageFiles([image], "articles");
+  let imageKey: string;
+  try {
+    [imageKey] = await uploadImageFiles([image], "articles");
+  } catch (error) {
+    // Without this the request throws and the browser gets the error page,
+    // losing a draft that took a conversation to write.
+    console.error("Failed to upload the article image", error);
+    return formError("Could not store the image. The article was not saved.", formData);
+  }
+
   await prisma.article.create({ data: { title, author, content, image: imageKey } });
 
   redirect("/admin/articles");
@@ -91,7 +100,12 @@ export async function updateArticle(
 
   let imageKey = article.image;
   if (image) {
-    [imageKey] = await uploadImageFiles([image], "articles");
+    try {
+      [imageKey] = await uploadImageFiles([image], "articles");
+    } catch (error) {
+      console.error("Failed to upload the article image", error);
+      return formError("Could not store the image. The changes were not saved.", formData);
+    }
   }
 
   await prisma.article.update({ where: { id }, data: { title, author, content, image: imageKey } });
