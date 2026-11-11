@@ -15,3 +15,17 @@ export async function revokeUser(id: string) {
   await prisma.user.update({ where: { id }, data: { approved: false } });
   revalidatePath("/admin/users");
 }
+
+// Orders hold payment records, and Order.user restricts deletes, so a user with
+// any order history stays.
+export async function deleteUser(id: string) {
+  await requireAdmin();
+
+  const orderCount = await prisma.order.count({ where: { userId: id } });
+  if (orderCount > 0) {
+    return;
+  }
+
+  await prisma.user.delete({ where: { id } });
+  revalidatePath("/admin/users");
+}

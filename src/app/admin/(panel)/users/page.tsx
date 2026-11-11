@@ -1,11 +1,13 @@
 import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { ApproveButton } from "./approve-button";
+import { DeleteUserButton } from "./delete-user-button";
 
 export default async function AdminUsersPage() {
   await requireAdmin();
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
+    include: { _count: { select: { orders: true } } },
   });
 
   return (
@@ -40,7 +42,10 @@ export default async function AdminUsersPage() {
                   </td>
                   <td className="py-2 pr-4 text-muted">{user.createdAt.toLocaleString()}</td>
                   <td className="py-2">
-                    <ApproveButton id={user.id} approved={user.approved} />
+                    <div className="flex items-center justify-end gap-2">
+                      <ApproveButton id={user.id} approved={user.approved} />
+                      <DeleteUserButton id={user.id} email={user.email} orderCount={user._count.orders} />
+                    </div>
                   </td>
                 </tr>
               ))}
