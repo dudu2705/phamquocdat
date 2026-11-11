@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { name, email, password } = body ?? {};
+  const { name, email, password, turnstileToken } = body ?? {};
 
   if (typeof email !== "string" || typeof password !== "string") {
     return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+  }
+
+  const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for");
+  const human = await verifyTurnstile(turnstileToken, ip);
+  if (!human) {
+    return NextResponse.json({ error: "Captcha check failed. Please try again." }, { status: 400 });
   }
 
   if (password.length < 8) {

@@ -25,6 +25,15 @@ First, run the development server:
 docker compose up -d  (s3 Mock)
 ```
 
+Registration is behind Cloudflare Turnstile. Add the keys to `.env`; registration
+is rejected without the secret. These are Cloudflare's test keys, which always pass
+and are fine for local work. Use real keys from the Cloudflare dashboard in production.
+
+```aiignore
+NEXT_PUBLIC_TURNSTILE_SITE_KEY="1x00000000000000000000AA"
+TURNSTILE_SECRET_KEY="1x0000000000000000000000000000000AA"
+```
+
 ```
 to reset all db :
 npx prisma migrate reset --config prisma7.config.ts

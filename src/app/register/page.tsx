@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Turnstile } from "./turnstile";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -10,6 +11,8 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,7 +22,7 @@ export default function RegisterPage() {
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, turnstileToken }),
     });
 
     setSubmitting(false);
@@ -27,6 +30,7 @@ export default function RegisterPage() {
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       setError(data.error ?? "Something went wrong.");
+      setCaptchaReset((count) => count + 1);
       return;
     }
 
@@ -96,11 +100,13 @@ export default function RegisterPage() {
           />
         </div>
 
+        <Turnstile onToken={setTurnstileToken} resetSignal={captchaReset} />
+
         {error && <p className="text-sm text-danger">{error}</p>}
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || !turnstileToken}
           className="btn btn-primary w-full"
         >
           {submitting ? "Creating account..." : "Register"}
